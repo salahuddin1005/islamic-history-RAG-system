@@ -4,6 +4,8 @@ A Retrieval-Augmented Generation (RAG) chatbot that answers questions about the 
 
 It ships with a battlefield-themed web interface and streams answers token by token.
 
+![Rashidun Archive UI](docs/screenshot.png)
+
 ## Features
 
 - **Grounded answers**: the model answers only from retrieved passages and says so when the context is insufficient.
