@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Local vector DB / storage
+qdrant_storage/
+
+# Editors & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local backups
+static/index.backup.html

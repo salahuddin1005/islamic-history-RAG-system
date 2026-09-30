@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rashidun Archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --night: #0b0806;
+      --ash: #1a1310;
+      --iron: #2b2622;
+      --iron-light: #4a423b;
+      --bronze: #b8894a;
+      --gold: #d9b56a;
+      --blood: #8e1f14;
+      --blood-bright: #c0321f;
+      --ember: #ff7a2e;
+      --ember-soft: rgba(255, 122, 46, 0.3);
+      --parchment: #ecdcbc;
+      --parchment-dark: #d4bf94;
+      --ink: #2a1a0e;
+      --text: #f0e3cb;
+      --text-dim: #b9a585;
+      --line: rgba(184, 137, 74, 0.35);
+      --font-war: "Cinzel Decorative", "Cinzel", serif;
+      --font-display: "Cinzel", "Times New Roman", serif;
+      --font-body: "Source Serif 4", "Georgia", serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      font-family: var(--font-body);
+      background: var(--night);
+      overflow-x: hidden;
+    }
+
+    /* ---------- Burning sky ---------- */
+    .sky {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 78%, rgba(255, 150, 60, 0.55) 0, rgba(230, 90, 30, 0.35) 7%, transparent 22%),
+        radial-gradient(ellipse 120% 60% at 50% 100%, rgba(192, 50, 31, 0.55), transparent 60%),
+        radial-gradient(ellipse 70% 40% at 12% 30%, rgba(120, 30, 15, 0.35), transparent 60%),
+        radial-gradient(ellipse 60% 35% at 88% 25%, rgba(90, 25, 12, 0.4), transparent 60%),
+        linear-gradient(180deg, #070504 0%, #1c0c07 35%, #4a160b 65%, #7a2a10 85%, #2a0d06 100%);
+    }
+
+    .sky::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.09;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      animation: grain 8s steps(6) infinite;
+    }
+
+    /* Drifting smoke */
+    .smoke {
+      position: fixed;
+      inset: -10% -20%;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 30% 18% at 20% 60%, rgba(40, 30, 26, 0.55), transparent 70%),
+        radial-gradient(ellipse 35% 20% at 70% 50%, rgba(30, 22, 20, 0.5), transparent 70%),
+        radial-gradient(ellipse 25% 15% at 45% 35%, rgba(50, 36, 30, 0.35), transparent 70%),
+        radial-gradient(ellipse 40% 22% at 90% 70%, rgba(25, 18, 15, 0.5), transparent 70%);
+      filter: blur(18px);
+      animation: smoke-drift 40s ease-in-out infinite alternate;
+    }
+
+    .smoke.two {
+      opacity: 0.7;
+      animation-duration: 55s;
+      animation-direction: alternate-reverse;
+      transform: scaleX(-1);
+    }
+
+    /* Rising embers (spawned by JS) */
+    .embers {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .embers i {
+      position: absolute;
+      bottom: -10px;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #ffb35c;
+      box-shadow: 0 0 6px 2px rgba(255, 122, 46, 0.8);
+      opacity: 0;
+      animation: ember-rise linear infinite;
+    }
+
+    /* Arrow volleys */
+    .volley {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .arrow {
+      position: absolute;
+      left: -120px;
+      width: 70px;
+      height: 10px;
+      opacity: 0;
+      animation: arrow-fly 7s cubic-bezier(0.3, 0.1, 0.7, 1) infinite;
+    }
+
+    .arrow svg { width: 100%; height: 100%; display: block; }
+
+    /* ---------- Battlefield horizon ---------- */
+    .horizon {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: min(42vh, 360px);
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .horizon svg {
+      position: absolute;
+      bottom: 0;
+      width: 140%;
+      left: -20%;
+      height: 100%;
+    }
+
+    .horizon .far { opacity: 0.55; animation: ride 64s ease-in-out infinite alternate-reverse; }
+    .horizon .near { animation: ride 48s ease-in-out infinite alternate; }
+
+    .flag { transform-box: fill-box; transform-origin: left center; animation: wave 1.6s ease-in-out infinite alternate; }
+    .flag.b { animation-duration: 2s; animation-delay: -0.6s; }
+    .flag.c { animation-duration: 1.8s; animation-delay: -1.1s; }
+
+    .fire { transform-box: fill-box; transform-origin: center bottom; animation: flicker 0.6s ease-in-out infinite alternate; }
+    .fire.b { animation-delay: -0.3s; animation-duration: 0.8s; }
+
+    .ember-line {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      z-index: 3;
+      background: linear-gradient(90deg, transparent, var(--blood-bright), var(--ember), var(--gold), var(--ember), var(--blood-bright), transparent);
+      box-shadow: 0 0 24px 6px rgba(255, 122, 46, 0.35);
+      animation: ember-pulse 3s ease-in-out infinite;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: radial-gradient(ellipse 85% 75% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.75) 100%);
+    }
+
+    /* ---------- Layout ---------- */
+    .shell {
+      position: relative;
+      z-index: 4;
+      max-width: 820px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 1.6rem 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 0.6rem 0 1.4rem;
+      animation: rise 1s ease-out both;
+    }
+
+    .crest {
+      width: 86px;
+      height: 86px;
+      margin: 0 auto 0.4rem;
+      filter: drop-shadow(0 0 18px rgba(255, 122, 46, 0.55));
+      animation: crest-in 1.2s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+    }
+
+    .brand {
+      margin: 0;
+      font-family: var(--font-war);
+      font-weight: 900;
+      font-size: clamp(2.2rem, 7.5vw, 3.7rem);
+      letter-spacing: 0.06em;
+      line-height: 1.05;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fff0cf 0%, var(--gold) 45%, #9a6a2c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 28px rgba(255, 110, 40, 0.45));
+    }
+
+    .tagline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-top: 0.7rem;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: var(--ember);
+      text-shadow: 0 0 12px rgba(255, 122, 46, 0.6);
+    }
+
+    .tagline::before,
+    .tagline::after {
+      content: "";
+      width: 3.5rem;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--bronze));
+    }
+
+    .tagline::after { transform: scaleX(-1); }
+
+    .lede {
+      margin: 0.9rem auto 0;
+      max-width: 30rem;
+      font-size: 1.04rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* ---------- War council panel ---------- */
+    .chat {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 460px;
+      background:
+        linear-gradient(170deg, rgba(43, 38, 34, 0.92), rgba(18, 13, 10, 0.95)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 6px);
+      border: 2px solid var(--iron-light);
+      outline: 1px solid rgba(0, 0, 0, 0.8);
+      outline-offset: 3px;
+      border-radius: 6px;
+      box-shadow:
+        inset 0 0 0 1px rgba(217, 181, 106, 0.18),
+        inset 0 0 60px rgba(0, 0, 0, 0.6),
+        0 0 0 5px rgba(43, 38, 34, 0.9),
+        0 0 0 6px rgba(184, 137, 74, 0.45),
+        0 30px 90px rgba(0, 0, 0, 0.7),
+        0 0 60px rgba(192, 50, 31, 0.25);
+      animation: rise 1.05s 0.1s ease-out both;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Iron rivets on the corners */
+    .rivet {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f3d9a0, var(--bronze) 45%, #3a2a14 100%);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      z-index: 2;
+    }
+    .rivet.tl { top: 8px; left: 8px; }
+    .rivet.tr { top: 8px; right: 8px; }
+    .rivet.bl { bottom: 8px; left: 8px; }
+    .rivet.br { bottom: 8px; right: 8px; }
+
+    .council-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem 2rem;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.6);
+      background: linear-gradient(180deg, var(--blood) 0%, #5a120b 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 200, 150, 0.25), 0 2px 0 rgba(184, 137, 74, 0.35);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #ffe7c2;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+      border-radius: 4px 4px 0 0;
+    }
+
+    .council-bar .live {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      color: #ffcf9a;
+    }
+
+    .council-bar .live::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ember);
+      box-shadow: 0 0 10px 2px var(--ember);
+      animation: beacon 1.4s ease-in-out infinite;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 1.5rem 0.9rem;
+      scroll-behavior: smooth;
+      scrollbar-color: var(--bronze) transparent;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 300px;
+      text-align: center;
+      padding: 1.5rem 0.5rem;
+      animation: fade 0.9s 0.35s ease both;
+    }
+
+    .empty h2 {
+      margin: 0 0 0.5rem;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.45rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow: 0 0 18px rgba(255, 122, 46, 0.4);
+    }
+
+    .empty p {
+      margin: 0 auto;
+      max-width: 26rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+      font-size: 0.98rem;
+    }
+
+    .suggestions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .suggestions button {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(142, 31, 20, 0.28), rgba(20, 14, 10, 0.6));
+      color: var(--text);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.95rem 0.7rem 0.85rem;
+      border-radius: 3px;
+      cursor: pointer;
+      clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+      transition: background 0.25s, transform 0.25s, color 0.25s, box-shadow 0.25s;
+    }
+
+    .suggestions button .ico {
+      font-size: 1.35rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 6px rgba(255, 122, 46, 0.6));
+    }
+
+    .suggestions button small {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--text-dim);
+      padding-bottom: 0.5rem;
+    }
+
+    .suggestions button:hover,
+    .suggestions button:focus-visible {
+      background: linear-gradient(180deg, rgba(192, 50, 31, 0.6), rgba(60, 16, 8, 0.8));
+      color: #fff0d6;
+      transform: translateY(-4px);
+      outline: none;
+    }
+
+    /* ---------- Messages ---------- */
+    .row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1.3rem;
+      animation: message-in 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+    }
+
+    .row.user { align-items: flex-end; }
+    .row.user { animation-name: charge-in-right; }
+    .row.assistant { align-items: flex-start; animation-name: charge-in-left; }
+
+    .speaker {
+      margin: 0 0.4rem 0.35rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.64rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--bronze);
+    }
+
+    .row.user .speaker { color: #ff9a6a; }
+
+    .bubble {
+      max-width: min(94%, 600px);
+      padding: 0.95rem 1.2rem;
+      line-height: 1.65;
+      font-size: 1.02rem;
+      word-wrap: break-word;
+    }
+
+    /* Commander's order: a red war banner */
+    .row.user .bubble {
+      background: linear-gradient(160deg, var(--blood-bright), var(--blood) 60%, #5a120b);
+      color: #fff3e2;
+      border: 1px solid rgba(217, 181, 106, 0.55);
+      border-radius: 4px;
+      box-shadow: inset 0 1px 0 rgba(255, 210, 170, 0.3), 0 8px 24px rgba(142, 31, 20, 0.45);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    /* Chronicler's dispatch: aged parchment scroll */
+    .row.assistant .bubble {
+      position: relative;
+      background:
+        radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.35), transparent 50%),
+        radial-gradient(ellipse at 90% 90%, rgba(140, 90, 40, 0.28), transparent 55%),
+        linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+      color: var(--ink);
+      border-top: 6px solid #8a6a3a;
+      border-bottom: 6px solid #8a6a3a;
+      border-radius: 2px;
+      box-shadow:
+        inset 0 0 30px rgba(120, 70, 20, 0.35),
+        0 10px 28px rgba(0, 0, 0, 0.55);
+      padding: 1.1rem 1.35rem;
+    }
+
+    .bubble .prose p { margin: 0 0 0.75rem; }
+    .bubble .prose p:last-child { margin-bottom: 0; }
+
+    .row.assistant .bubble .prose strong { color: var(--blood); font-weight: 700; }
+    .row.assistant .bubble .prose em { color: #5c4024; }
+    .row.user .bubble .prose strong { color: #ffe0a8; }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blood);
+      animation: fade 0.4s ease both;
+    }
+
+    .status-line::before {
+      content: "⚔";
+      font-size: 1.05rem;
+      display: inline-block;
+      animation: clash 0.7s ease-in-out infinite alternate;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.55ch;
+      height: 1.05em;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      background: var(--blood-bright);
+      animation: blink 0.9s steps(1) infinite;
+    }
+
+    .sources {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px dashed rgba(90, 60, 30, 0.45);
+      animation: fade 0.5s ease both;
+    }
+
+    .sources strong {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--blood);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+
+    .sources ul { margin: 0; padding: 0; list-style: none; }
+
+    .sources li {
+      padding: 0.2rem 0;
+      font-size: 0.85rem;
+      color: #5c4024;
+    }
+
+    .sources li::before {
+      content: "🛡 ";
+      font-size: 0.8em;
+    }
+
+    /* ---------- Composer ---------- */
+    .composer {
+      border-top: 2px solid rgba(0, 0, 0, 0.6);
+      box-shadow: inset 0 1px 0 rgba(184, 137, 74, 0.25);
+      padding: 1rem 1.6rem 1.2rem;
+      background: linear-gradient(180deg, rgba(20, 14, 10, 0.75), rgba(10, 7, 5, 0.9));
+      border-radius: 0 0 4px 4px;
+    }
+
+    form {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-end;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      min-height: 52px;
+      max-height: 140px;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--iron-light);
+      border-radius: 3px;
+      font: inherit;
+      color: var(--text);
+      background: rgba(10, 7, 5, 0.85);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--ember);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--ember-soft), 0 0 22px rgba(255, 122, 46, 0.25);
+    }
+
+    textarea::placeholder { color: #7a6a55; font-style: italic; }
+
+    button.send {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid var(--gold);
+      background: linear-gradient(180deg, var(--blood-bright), var(--blood) 55%, #4a0e08);
+      color: #fff0d6;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.95rem 1.3rem;
+      border-radius: 3px;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 210, 170, 0.35), 0 6px 18px rgba(142, 31, 20, 0.5);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+      transition: filter 0.2s, transform 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    button.send::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255, 240, 210, 0.45), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.5s;
+    }
+
+    button.send:hover:not(:disabled) {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+      box-shadow: inset 0 1px 0 rgba(255, 210, 170, 0.35), 0 10px 26px rgba(192, 50, 31, 0.6), 0 0 18px rgba(255, 122, 46, 0.45);
+    }
+
+    button.send:hover:not(:disabled)::after { left: 130%; }
+    button.send:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+
+    button.send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .footnote {
+      margin: 0.85rem 0 0;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #7a6a55;
+    }
+
+    .error {
+      margin-top: 0.55rem;
+      color: #ff9a7a;
+      font-size: 0.9rem;
+    }
+
+    /* Clash flash when a question is sent */
+    .flash {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 85%, rgba(255, 170, 90, 0.35), transparent 60%);
+      opacity: 0;
+    }
+    .flash.on { animation: flash 0.6s ease-out; }
+
+    /* ---------- Keyframes ---------- */
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes crest-in { from { opacity: 0; transform: scale(0.4) rotate(-25deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+    @keyframes charge-in-right { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes charge-in-left { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes message-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+    @keyframes ride { from { transform: translateX(-4%); } to { transform: translateX(4%); } }
+    @keyframes ember-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+    @keyframes beacon { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+    @keyframes clash { from { transform: rotate(-12deg) scale(1); } to { transform: rotate(12deg) scale(1.2); } }
+    @keyframes wave { from { transform: skewY(-4deg) scaleX(1); } to { transform: skewY(5deg) scaleX(0.9); } }
+    @keyframes flicker { from { transform: scaleY(1) scaleX(1); opacity: 0.9; } to { transform: scaleY(1.25) scaleX(0.9); opacity: 1; } }
+    @keyframes smoke-drift { from { transform: translateX(-6%) translateY(0); } to { transform: translateX(6%) translateY(-3%); } }
+    @keyframes flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+
+    @keyframes ember-rise {
+      0% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translate(var(--dx, 40px), -105vh); opacity: 0; }
+    }
+
+    @keyframes arrow-fly {
+      0% { transform: translate(0, 0) rotate(-14deg); opacity: 0; }
+      8% { opacity: 0.9; }
+      50% { transform: translate(60vw, -6vh) rotate(0deg); }
+      85% { opacity: 0.9; }
+      100% { transform: translate(125vw, 10vh) rotate(16deg); opacity: 0; }
+    }
+
+    @keyframes grain {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-1%, 1%); }
+      40% { transform: translate(1%, -1%); }
+      60% { transform: translate(-1%, -1%); }
+      80% { transform: translate(1%, 1%); }
+    }
+
+    @media (max-width: 560px) {
+      .shell { padding: 1rem 0.8rem 1rem; }
+      .crest { width: 64px; height: 64px; }
+      .brand { font-size: 1.9rem; letter-spacing: 0.03em; }
+      .tagline { letter-spacing: 0.22em; font-size: 0.62rem; }
+      .tagline::before, .tagline::after { width: 1.5rem; }
+      .council-bar { padding: 0.7rem 1.4rem; font-size: 0.64rem; letter-spacing: 0.12em; white-space: nowrap; }
+      .council-bar .live { font-size: 0.58rem; letter-spacing: 0.1em; }
+      .messages { padding: 1.2rem 1rem 0.8rem; }
+      .composer { padding: 0.9rem 1rem 1rem; }
+      .bubble { max-width: 100%; }
+      button.send { padding: 0.95rem 0.9rem; letter-spacing: 0.1em; }
+      .horizon { height: 28vh; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+      .embers, .volley { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+  <div class="smoke" aria-hidden="true"></div>
+  <div class="smoke two" aria-hidden="true"></div>
+
+  <div class="volley" aria-hidden="true" id="volley"></div>
+  <div class="embers" aria-hidden="true" id="embers"></div>
+
+  <div class="horizon" aria-hidden="true">
+    <!-- Far line: fortress, tents and an opposing army -->
+    <svg class="far" viewBox="0 0 1200 240" preserveAspectRatio="xMidYMax meet">
+      <path fill="#1e0c07" d="M0 240 L0 160 Q100 130 200 150 T400 140 T600 155 T800 135 T1000 150 T1200 140 L1200 240 Z"/>
+      <!-- fortress -->
+      <g fill="#1a0a06">
+        <rect x="820" y="92" width="150" height="60"/>
+        <rect x="805" y="70" width="28" height="82"/>
+        <rect x="957" y="70" width="28" height="82"/>
+        <path d="M805 70h6v-8h6v8h5v-8h6v8h5v-8h0"/>
+        <path d="M820 92h10v-10h10v10h10v-10h10v10h10v-10h10v10h10v-10h10v10h10v-10h10v10h10v-10h10v10h10v-10h10v10"/>
+        <rect x="880" y="40" width="30" height="60"/>
+        <path d="M875 40 L895 14 L915 40 Z"/>
+      </g>
+      <!-- smoke from the fortress -->
+      <g fill="#2a1a14" opacity="0.6">
+        <circle cx="895" cy="8" r="14"/><circle cx="905" cy="-12" r="18"/>
+      </g>
+      <!-- tents -->
+      <g fill="#1a0a06">
+        <path d="M120 150 L160 110 L200 150 Z"/>
+        <path d="M190 152 L222 120 L254 152 Z"/>
+        <path d="M300 146 L330 116 L360 146 Z"/>
+      </g>
+      <!-- distant soldiers with spears -->
+      <g stroke="#1a0a06" stroke-width="2">
+        <path d="M420 150 V112 M440 152 V110 M460 150 V114 M480 151 V111 M500 150 V113 M520 152 V110 M540 150 V112 M560 151 V111 M580 150 V114 M600 152 V110 M620 150 V113 M640 150 V112 M660 151 V110 M680 150 V114"/>
+      </g>
+      <g fill="#1a0a06">
+        <path d="M410 152 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 Z"/>
+      </g>
+      <!-- camp fires -->
+      <path class="fire" fill="#ff7a2e" d="M240 152 q-6 -10 0 -22 q6 12 0 22 Z"/>
+      <path class="fire b" fill="#ffb35c" d="M345 148 q-5 -9 0 -18 q5 10 0 18 Z"/>
+    </svg>
+
+    <!-- Near line: cavalry charge with banners -->
+    <svg class="near" viewBox="0 0 1200 240" preserveAspectRatio="xMidYMax meet">
+      <defs>
+        <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a0c06"/>
+          <stop offset="100%" stop-color="#050302"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#ground)" d="M0 240 L0 180 Q150 158 300 176 T600 164 T900 178 T1200 168 L1200 240 Z"/>
+
+      <!-- Banner poles + waving flags -->
+      <g>
+        <path stroke="#0a0504" stroke-width="3" d="M250 176 V70"/>
+        <path class="flag" fill="#7a1a10" d="M251 72 h56 l-12 16 l12 16 h-56 Z"/>
+        <path stroke="#0a0504" stroke-width="3" d="M640 168 V58"/>
+        <path class="flag b" fill="#0e0806" d="M641 60 h62 l-14 17 l14 17 h-62 Z"/>
+        <path stroke="#0a0504" stroke-width="3" d="M1010 176 V76"/>
+        <path class="flag c" fill="#7a1a10" d="M1011 78 h52 l-12 15 l12 15 h-52 Z"/>
+      </g>
+
+      <!-- Cavalry silhouettes -->
+      <g fill="#050302">
+        <path d="M140 178c20-3 38-20 48-20 7 0 10 5 17 5 12-26 34-40 52-32 10 5 7 22-3 33l22 10c-5 12-22 17-37 12l-10 22h-28l5-24c-15 2-34-6-40-16l-26 10z"/>
+        <path d="M480 170c24-4 44-24 56-22 9 2 12 9 22 7 14-30 40-44 58-34 12 7 7 26-5 38l26 12c-7 14-26 18-42 12l-12 26h-30l7-28c-16 2-38-8-44-20l-36 9z"/>
+        <path d="M700 175c18-2 34-18 44-18 7 0 9 5 16 5 11-24 32-38 48-30 10 5 7 20-2 30l20 9c-5 11-20 15-34 11l-9 20h-24l4-22c-13 2-30-5-36-14l-27 9z"/>
+        <path d="M920 168c22-5 42-24 52-22 9 2 11 9 20 7 13-28 38-42 56-32 11 7 7 24-4 36l24 11c-6 13-24 17-40 12l-11 24h-28l6-26c-15 2-35-7-41-18l-34 8z"/>
+      </g>
+      <!-- Lances held by riders -->
+      <g stroke="#050302" stroke-width="2.5">
+        <path d="M230 128 L300 60"/>
+        <path d="M590 118 L668 44"/>
+        <path d="M790 130 L850 70"/>
+        <path d="M1030 118 L1100 50"/>
+      </g>
+
+      <!-- Foreground spear wall -->
+      <g stroke="#030201" stroke-width="3">
+        <path d="M20 240 L70 150 M60 240 L105 160 M1110 240 L1150 150 M1150 240 L1185 162"/>
+      </g>
+      <g fill="#030201">
+        <path d="M70 150 l-4 14 l8 -4 Z M105 160 l-4 13 l8 -4 Z M1150 150 l-6 13 l9 -2 Z M1185 162 l-6 12 l9 -2 Z"/>
+      </g>
+
+      <path fill="none" stroke="#ff7a2e" stroke-opacity="0.35" stroke-width="1.2" d="M0 230 Q300 216 600 226 T1200 218"/>
+    </svg>
+  </div>
+  <div class="ember-line" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <div class="shell">
+    <header class="hero">
+      <svg class="crest" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c0321f"/>
+            <stop offset="100%" stop-color="#4a0e08"/>
+          </linearGradient>
+          <linearGradient id="blade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fff3dc"/>
+            <stop offset="100%" stop-color="#9a8a78"/>
+          </linearGradient>
+        </defs>
+        <!-- crossed swords -->
+        <g stroke="#2a1a0e" stroke-width="1">
+          <path fill="url(#blade)" d="M14 10 L18 8 L70 66 L66 70 Z"/>
+          <path fill="url(#blade)" d="M86 10 L82 8 L30 66 L34 70 Z"/>
+        </g>
+        <g fill="#d9b56a" stroke="#3a2a14" stroke-width="1">
+          <rect x="60" y="66" width="18" height="5" rx="2" transform="rotate(45 69 68.5)"/>
+          <rect x="22" y="66" width="18" height="5" rx="2" transform="rotate(-45 31 68.5)"/>
+          <circle cx="78" cy="80" r="3.5"/><circle cx="22" cy="80" r="3.5"/>
+        </g>
+        <path stroke="#3a2a14" stroke-width="3" d="M70 70 L77 78 M30 70 L23 78"/>
+        <!-- shield -->
+        <path fill="url(#shield)" stroke="#d9b56a" stroke-width="2.5" d="M50 26 L72 34 V54 C72 70 62 80 50 86 C38 80 28 70 28 54 V34 Z"/>
+        <path fill="none" stroke="rgba(255,220,170,0.35)" stroke-width="1" d="M50 31 L67 37 V54 C67 67 59 75 50 80 C41 75 33 67 33 54 V37 Z"/>
+        <!-- crescent & star -->
+        <path fill="#f3d9a0" d="M52 44 a11 11 0 1 0 0 20 a9 9 0 1 1 0 -20 Z"/>
+        <path fill="#f3d9a0" d="M58 50 l1.6 3.4 3.6 .4 -2.7 2.4 .8 3.6 -3.3 -1.9 -3.3 1.9 .8 -3.6 -2.7 -2.4 3.6 -.4 Z"/>
+      </svg>
+      <h1 class="brand">Rashidun Archive</h1>
+      <div class="tagline">Chronicles of the Battlefield</div>
+      <p class="lede">Summon the chronicler. Ask of battles, sieges, succession and the companions, drawn from your history manuscripts.</p>
+    </header>
+
+    <main class="chat" aria-label="Chat">
+      <span class="rivet tl"></span><span class="rivet tr"></span>
+      <span class="rivet bl"></span><span class="rivet br"></span>
+
+      <div class="council-bar">
+        <span>⚔ The War Council</span>
+        <span class="live">Chronicler ready</span>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="empty" id="empty">
+          <div>
+            <h2>Choose your battle</h2>
+            <p>Seek accounts of Jamal, Siffin, the Ridda wars, and the campaigns of the first four caliphs, grounded in your uploaded sources.</p>
+            <div class="suggestions">
+              <button type="button" data-q="What happened at the Battle of Jamal?"><span class="ico">🐪</span>Battle of Jamal<small>656 CE · Basra</small></button>
+              <button type="button" data-q="What happened during the Ridda wars under Abu Bakr?"><span class="ico">🛡</span>The Ridda Wars<small>Abu Bakr's campaigns</small></button>
+              <button type="button" data-q="What happened at the Battle of Siffin?"><span class="ico">⚔</span>Battle of Siffin<small>657 CE · Euphrates</small></button>
+              <button type="button" data-q="What reforms did Umar introduce?"><span class="ico">🏰</span>Umar's Reforms<small>Forging an empire</small></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <form id="form">
+          <textarea id="input" rows="1" placeholder="Issue your question to the chronicler…" autocomplete="off"></textarea>
+          <button class="send" type="submit" id="send">Charge <span aria-hidden="true">⚔</span></button>
+        </form>
+        <p class="error" id="error" hidden></p>
+        <p class="footnote">From your local archives · dispatched as written</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById("messages");
+    const emptyEl = document.getElementById("empty");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const errorEl = document.getElementById("error");
+    const flashEl = document.getElementById("flash");
+
+    // ----- Battlefield ambience: embers and arrow volleys -----
+    (function spawnAmbience() {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const embers = document.getElementById("embers");
+      const emberCount = window.innerWidth < 560 ? 18 : 36;
+      for (let i = 0; i < emberCount; i++) {
+        const e = document.createElement("i");
+        const size = 1.5 + Math.random() * 3;
+        e.style.left = Math.random() * 100 + "%";
+        e.style.width = e.style.height = size + "px";
+        e.style.setProperty("--dx", (Math.random() * 160 - 80) + "px");
+        e.style.animationDuration = 7 + Math.random() * 10 + "s";
+        e.style.animationDelay = -Math.random() * 15 + "s";
+        embers.appendChild(e);
+      }
+
+      const volley = document.getElementById("volley");
+      const arrowSvg =
+        '<svg viewBox="0 0 70 10"><path d="M0 5 H60" stroke="#120806" stroke-width="1.6"/>' +
+        '<path d="M60 1 L70 5 L60 9 Z" fill="#120806"/>' +
+        '<path d="M0 5 L6 0 M0 5 L6 10 M4 5 L10 0 M4 5 L10 10" stroke="#120806" stroke-width="1.2"/></svg>';
+      for (let i = 0; i < 7; i++) {
+        const a = document.createElement("div");
+        a.className = "arrow";
+        a.innerHTML = arrowSvg;
+        a.style.top = 12 + Math.random() * 35 + "%";
+        a.style.animationDuration = 5 + Math.random() * 4 + "s";
+        a.style.animationDelay = (i < 4 ? i * 0.25 : 6 + (i - 4) * 0.3) + "s";
+        volley.appendChild(a);
+      }
+    })();
+
+    function clashFlash() {
+      flashEl.classList.remove("on");
+      void flashEl.offsetWidth;
+      flashEl.classList.add("on");
+    }
+
+    function hideEmpty() {
+      if (emptyEl) emptyEl.remove();
+    }
+
+    function scrollBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /** Convert light markdown / asterisks into clean HTML; sources stay separate. */
+    function formatProse(text) {
+      let s = escapeHtml(text);
+      // **bold** or __bold__
+      s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      s = s.replace(/__(.+?)__/g, "<strong>$1</strong>");
+      // *italic* or _italic_ (avoid lone list asterisks mid-line when possible)
+      s = s.replace(/(^|[^*])\*([^*\n]+)\*([^*]|$)/g, "$1<em>$2</em>$3");
+      // Strip leftover decorative asterisks used as bullets: "* item"
+      s = s.replace(/(^|\n)\s*\*\s+/g, "$1");
+      // Strip any remaining lone asterisks
+      s = s.replace(/\*/g, "");
+      const paras = s
+        .split(/\n{2,}/)
+        .map((p) => p.replace(/\n/g, "<br>").trim())
+        .filter(Boolean)
+        .map((p) => `<p>${p}</p>`)
+        .join("");
+      return `<div class="prose">${paras || "<p></p>"}</div>`;
+    }
+
+    function formatSources(sources) {
+      if (!sources || !sources.length) {
+        return `<div class="sources"><strong>Sources of the chronicle</strong><ul><li>No matching passages returned</li></ul></div>`;
+      }
+      const items = sources
+        .map((s) => `<li>${escapeHtml(s.source)} · page ${escapeHtml(String(s.page))}</li>`)
+        .join("");
+      return `<div class="sources"><strong>Sources of the chronicle</strong><ul>${items}</ul></div>`;
+    }
+
+    function appendRow(role, html) {
+      hideEmpty();
+      const row = document.createElement("div");
+      row.className = `row ${role}`;
+      const speaker = role === "user" ? "Your command" : "The Chronicler";
+      row.innerHTML = `<div class="speaker">${speaker}</div><div class="bubble">${html}</div>`;
+      messagesEl.appendChild(row);
+      scrollBottom();
+      return row;
+    }
+
+    async function askQuestion(question) {
+      const q = question.trim();
+      if (!q) return;
+
+      errorEl.hidden = true;
+      clashFlash();
+      appendRow("user", escapeHtml(q));
+      input.value = "";
+      input.style.height = "auto";
+      sendBtn.disabled = true;
+
+      const row = appendRow(
+        "assistant",
+        `<span class="status-line">Scouts riding to the archives…</span>`
+      );
+      const bubble = row.querySelector(".bubble");
+
+      let answerText = "";
+      let sources = null;
+
+      try {
+        const res = await fetch("/api/ask/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+          body: JSON.stringify({ question: q }),
+        });
+
+        if (!res.ok || !res.body) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.detail || "Request failed");
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            const line = part.split("\n").find((l) => l.startsWith("data: "));
+            if (!line) continue;
+            let event;
+            try {
+              event = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
+
+            if (event.type === "status") {
+              if (!answerText) {
+                bubble.innerHTML = `<span class="status-line">${escapeHtml(event.message)}</span>`;
+              }
+            } else if (event.type === "token") {
+              answerText += event.text;
+              bubble.innerHTML = formatProse(answerText) + `<span class="cursor" aria-hidden="true"></span>`;
+              scrollBottom();
+            } else if (event.type === "sources") {
+              sources = event.sources;
+            } else if (event.type === "error") {
+              throw new Error(event.message || "Stream error");
+            } else if (event.type === "done") {
+              bubble.innerHTML =
+                formatProse(answerText || "No answer returned.") +
+                formatSources(sources || []);
+            }
+          }
+        }
+
+        // If stream ended without explicit done
+        if (!bubble.querySelector(".sources")) {
+          bubble.innerHTML =
+            formatProse(answerText || "No answer returned.") +
+            formatSources(sources || []);
+        }
+      } catch (err) {
+        row.remove();
+        errorEl.hidden = false;
+        errorEl.textContent = err.message || "Something went wrong.";
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+        scrollBottom();
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      askQuestion(input.value);
+    });
+
+    document.querySelectorAll(".suggestions button").forEach((btn) => {
+      btn.addEventListener("click", () => askQuestion(btn.dataset.q));
+    });
+
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>
