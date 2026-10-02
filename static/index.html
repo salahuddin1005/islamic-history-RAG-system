@@ -516,6 +516,32 @@
       animation: blink 0.9s steps(1) infinite;
     }
 
+    .correction {
+      margin-top: 0.9rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed rgba(90, 60, 30, 0.35);
+      font-size: 0.8rem;
+      color: #5c4024;
+      animation: fade 0.5s ease both;
+    }
+
+    .correction strong {
+      display: inline;
+      margin-right: 0.35rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--blood);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+
+    .correction-rewrite {
+      margin-top: 0.35rem;
+      font-style: italic;
+      opacity: 0.9;
+    }
+
     .sources {
       margin-top: 1rem;
       padding-top: 0.85rem;
@@ -1008,6 +1034,23 @@
 
       let answerText = "";
       let sources = null;
+      let correction = null;
+
+      function formatCorrection(info) {
+        if (!info) return "";
+        const retries =
+          (info.retrieval_retries || 0) + (info.generation_retries || 0);
+        const ok = info.answer_ok ? "verified against sources" : "returned after max checks";
+        const rewrite =
+          info.rewritten_question &&
+          info.original_question &&
+          info.rewritten_question !== info.original_question
+            ? `<div class="correction-rewrite">Refined search: ${escapeHtml(info.rewritten_question)}</div>`
+            : "";
+        return `<div class="correction"><strong>Self-check</strong> ${escapeHtml(ok)}${
+          retries ? ` · ${retries} correction pass${retries > 1 ? "es" : ""}` : ""
+        }${rewrite}</div>`;
+      }
 
       try {
         const res = await fetch("/api/ask/stream", {
@@ -1045,18 +1088,28 @@
             if (event.type === "status") {
               if (!answerText) {
                 bubble.innerHTML = `<span class="status-line">${escapeHtml(event.message)}</span>`;
+              } else if (/check|correct|refin|evaluat|search again/i.test(event.message || "")) {
+                bubble.innerHTML =
+                  formatProse(answerText) +
+                  `<span class="status-line">${escapeHtml(event.message)}</span>`;
               }
+            } else if (event.type === "reset") {
+              answerText = "";
+              bubble.innerHTML = `<span class="status-line">Correcting…</span>`;
             } else if (event.type === "token") {
               answerText += event.text;
               bubble.innerHTML = formatProse(answerText) + `<span class="cursor" aria-hidden="true"></span>`;
               scrollBottom();
             } else if (event.type === "sources") {
               sources = event.sources;
+            } else if (event.type === "correction") {
+              correction = event;
             } else if (event.type === "error") {
               throw new Error(event.message || "Stream error");
             } else if (event.type === "done") {
               bubble.innerHTML =
                 formatProse(answerText || "No answer returned.") +
+                formatCorrection(correction) +
                 formatSources(sources || []);
             }
           }
@@ -1066,6 +1119,7 @@
         if (!bubble.querySelector(".sources")) {
           bubble.innerHTML =
             formatProse(answerText || "No answer returned.") +
+            formatCorrection(correction) +
             formatSources(sources || []);
         }
       } catch (err) {

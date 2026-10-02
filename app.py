@@ -39,10 +39,22 @@ class Route(BaseModel):
     method: str | None = None
 
 
+class Correction(BaseModel):
+    docs_ok: bool = False
+    answer_ok: bool = False
+    retrieval_retries: int = 0
+    generation_retries: int = 0
+    rewritten_question: str | None = None
+    original_question: str | None = None
+    grade_reason: str = ""
+    steps: list[str] = []
+
+
 class AskResponse(BaseModel):
     answer: str
     sources: list[Source]
     route: Route
+    correction: Correction | None = None
 
 
 @app.get("/")
@@ -69,7 +81,12 @@ def api_ask(body: AskRequest):
     if not isinstance(answer, str):
         answer = str(answer)
 
-    return AskResponse(answer=answer, sources=result["sources"], route=result["route"])
+    return AskResponse(
+        answer=answer,
+        sources=result["sources"],
+        route=result["route"],
+        correction=result.get("correction"),
+    )
 
 
 @app.post("/api/ask/stream")
