@@ -12,7 +12,7 @@ It ships with a battlefield-themed web interface and streams answers token by to
 - **Source citations**: each answer lists the PDF and page numbers it drew from.
 - **Streaming UI**: answers are streamed live over Server-Sent Events.
 - **Battlefield theme**: burning sky, cavalry, arrow volleys, war banners and parchment dispatches.
-- **LangGraph pipeline**: a simple `retrieve → generate` graph built with LangChain.
+- **Multi-document agentic routing**: a LangGraph `route → retrieve → generate` pipeline. Each question is routed to the manuscript(s) it is about, and only those are searched (see below).
 
 ## Tech stack
 
@@ -30,7 +30,8 @@ It ships with a battlefield-themed web interface and streams answers token by to
 ```
 islamic-history-rag/
 ├── app.py            # FastAPI server: UI + /api/ask and /api/ask/stream
-├── rag.py            # RAG pipeline (retriever, prompt, LLM, streaming)
+├── catalog.py        # Document registry: doc_id, aliases, topic descriptions
+├── rag.py            # Agentic RAG pipeline (router, scoped retrieval, LLM, streaming)
 ├── ingest.py         # Loads PDFs, chunks them, embeds and indexes into Qdrant
 ├── data/pdfs/        # Source manuscripts (PDF)
 ├── static/index.html # Battlefield-themed chat UI
@@ -89,7 +90,9 @@ Put your PDFs in `data/pdfs/`, then run:
 python ingest.py
 ```
 
-This splits the PDFs into 800-character chunks with 150 characters of overlap, embeds them with Gemini and (re)creates the Qdrant collection.
+This splits the PDFs into 800-character chunks with 150 characters of overlap, tags every chunk with its document's `doc_id`, embeds them with Gemini and (re)creates the Qdrant collection with a keyword payload index on `doc_id`.
+
+Every PDF must be registered in `catalog.py`; ingest stops with an error listing any that are not.
 
 ### 5. Run the app
 
@@ -99,13 +102,26 @@ python -m uvicorn app:app --reload --port 8000
 
 Open **http://localhost:8000** and ask your question.
 
+## How routing works
+
+Each manuscript is one entry in `catalog.py` with a `doc_id`, spelling aliases and a topic description.
+
+1. **Route**: explicit `doc_ids` in the request win. Otherwise the question is matched against the aliases ("Abu Bakar", "Siddiq", "Umer", "Usman", …) with no LLM call. Only if no name matches does a Gemini structured-output call pick documents from the topic descriptions (e.g. "Battle of Jamal" → `ali`). If nothing fits, the whole collection is searched.
+2. **Retrieve**: the question is embedded once, then one Qdrant search per routed document runs with a `doc_id` filter. A question about Abu Bakr never touches the other manuscripts. A question naming two caliphs gets evidence from both (at least 3 passages each).
+3. **Generate**: the answer is written only from those passages.
+
+To add a manuscript, put the PDF in `data/pdfs/`, add a `SourceDoc` entry to `catalog.py`, and re-run `python ingest.py`.
+
 ## API
 
 | Method | Endpoint           | Description                                    |
 |--------|--------------------|------------------------------------------------|
 | GET    | `/`                | Web UI                                         |
-| POST   | `/api/ask`         | Returns `{ answer, sources }` as JSON          |
-| POST   | `/api/ask/stream`  | SSE stream of `status`, `token`, `sources`, `done` events |
+| GET    | `/api/documents`   | Lists the routable documents (`doc_id`, title, file) |
+| POST   | `/api/ask`         | Returns `{ answer, sources, route }` as JSON   |
+| POST   | `/api/ask/stream`  | SSE stream of `status`, `route`, `token`, `sources`, `done` events |
+
+Both `ask` endpoints accept an optional `doc_ids` list (e.g. `["abu_bakr"]`) to force the scope and skip routing.
 
 Example:
 
